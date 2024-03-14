@@ -1,0 +1,21 @@
+{
+  "name": "cli-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./bin/index.js",
+  "bin": {
+    "bran": "./bin/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "https://www.branhills.com/",
+  "license": "ISC",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "cheerio": "^1.0.0-rc.12",
+    "picocolors": "^1.0.0"
+  }
+}
