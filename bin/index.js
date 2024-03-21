@@ -19,33 +19,37 @@ async function main() {
 		message: "What should we name your icon set?",
 	});
 
-	const replVariables = await p.confirm({
+	const replVar = await p.confirm({
 		message: `Would you like to replace any colors with variables?`,
 	});
-	const colors = replVariables
-		? await p.group(
-				{
-					fColor: () => p.text({ message: "Type in the color to be replaced" }),
-					rColor: ({ results }) =>
-						p.text({
-							message: `What color should we replace ${picocolors.cyan(
-								results.fColor
-							)} with?`,
-						}),
-				},
-				{
-					// On Cancel callback that wraps the group
-					// So if the user cancels one of the prompts in the group this function will be called
-					onCancel: ({ results }) => {
-						p.cancel("Operation cancelled.");
-						process.exit(0);
-					},
-				}
-		  )
-		: null;
+	let colorsRepeat = false;
+	let replCount = 0;
+	let replArr = [];
+	if (replVar === true) {
+		do {
+			const colors = await p.group({
+				fColor: () => p.text({ message: "Type in the color to be replaced" }),
+				rColor: ({ results }) =>
+					p.text({
+						message: `What color should we replace ${picocolors.cyan(
+							results.fColor
+						)} with?`,
+					}),
+				re: () => p.confirm({ message: "Replace another color?" }),
+			});
+			replArr.push({
+				replCount: { fColor: colors.fColor, rColor: colors.rColor },
+			});
+			replCount++;
+			console.log(replArr);
+			colorsRepeat = colors.re;
+			if (colors.fColor || colors.rColor === undefined) {
+				process.exit(1, console.log("Error code 1: Undefined entry"));
+			}
+		} while (colorsRepeat === true);
+	}
 
 	const outputFilePath = outputFileName + ".json";
-
 	const branicons = {};
 
 	fs.readdir(directoryPath, (err, files) => {
@@ -64,30 +68,31 @@ async function main() {
 					return;
 				}
 				if (stats.isFile()) {
-					const svgFileName = path.basename(filePath, ".svg");
 					const pathStringsArray = [];
-
+					const svgFileName = path.basename(filePath, ".svg");
 					const buffer = fs.readFileSync(filePath);
 					const $ = cheerio.load(buffer, null, false);
 
-					// Get all attributes from paths
+					// Get all attributes from SVG
 					$("path").each(function () {
 						const d = $(this).attr();
 						pathStringsArray.push(d);
 					});
-
-					// Find and replace
-					if (replVariables) {
-						var replPathStringsArray = JSON.stringify(...pathStringsArray);
-						var replPathStringsArray = replPathStringsArray.replace(
-							colors.fColor,
-							colors.rColor
-						);
-						var replPathStringsArray = JSON.parse(replPathStringsArray);
-					}
 					
-					// Grouping the items together under the icon name
-					branicons[svgFileName] = replVariables ? { ...replPathStringsArray } : {...pathStringsArray};
+					if (replVar) {
+						const repl = JSON.stringify({ ...pathStringsArray });
+						replArr.forEach((e, index) => {
+							console.log("Replacing " + index);
+							repl.replace(replArr.fColor, replArr.rColor);
+							return;
+						});
+						const replPathStringsArray = JSON.parse();
+						// Grouping the items together under the icon name
+						branicons[svgFileName] = { ...replPathStringsArray };
+					} else {
+						// Grouping the items together under the icon name
+						branicons[svgFileName] = { ...pathStringsArray };
+					}
 					// console.log("NEW:", filePath);
 					filesProcessed++;
 
