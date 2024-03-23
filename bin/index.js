@@ -44,7 +44,7 @@ async function main() {
 			console.log(replArr);
 			colorsRepeat = colors.re;
 			if (colors.fColor || colors.rColor === undefined) {
-				process.exit(1, console.log("Error code 1: Undefined entry"));
+				throw new Error("Error code 1: Undefined entry");
 			}
 		} while (colorsRepeat === true);
 	}
@@ -52,22 +52,21 @@ async function main() {
 	const outputFilePath = outputFileName + ".json";
 	const branicons = {};
 
-	fs.readdir(directoryPath, (err, files) => {
+	fs.readdir(directoryPath, { withFileTypes: true }, (err, files) => {
 		if (err) {
 			console.error("Error reading directory", err);
 			return;
 		}
-
 		let filesProcessed = 0;
 		// Get paths from svg, replace text, dump into JSON file
-		files.forEach((file) => {
-			const filePath = path.join(directoryPath, file);
+		files.forEach((dirent) => {
+			const filePath = path.join(directoryPath, dirent.name);
 			fs.stat(filePath, (err, stats) => {
 				if (err) {
 					console.error("Error getting file stats:", err);
 					return;
 				}
-				if (stats.isFile()) {
+				if (dirent.isFile()) {
 					const pathStringsArray = [];
 					const svgFileName = path.basename(filePath, ".svg");
 					const buffer = fs.readFileSync(filePath);
@@ -99,7 +98,7 @@ async function main() {
 					if (filesProcessed === files.length) {
 						writeJsonFile();
 					}
-				} else if (stats.isDirectory()) {
+				} else if (dirent.isDirectory()) {
 					p.text("Directory found:", filePath);
 					// Recursively call readdir if it's a directory
 				}
